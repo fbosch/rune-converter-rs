@@ -7,6 +7,6 @@ fn main() {
         transcribe_punctuation: true,
     });
 
-    let name = futhark.transcribe("Frederik Bosch");
-    println!("name: {}", name);
+    let lorem = futhark.transcribe("Lorem ipsum dolor sit amet, consectetur adipiscing elit.");
+    println!("{}", lorem);
 }
