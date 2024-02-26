@@ -1,7 +1,28 @@
+#[derive(Clone, Copy)]
+struct TranscriptionConfig {
+    convert_spaces: bool,
+    convert_punctuation: bool,
+}
+
+impl Default for TranscriptionConfig {
+    fn default() -> Self {
+        TranscriptionConfig {
+            convert_spaces: true,
+            convert_punctuation: true,
+        }
+    }
+}
+
 #[non_exhaustive]
-struct ElderFuthark;
+struct ElderFuthark {
+    config: TranscriptionConfig,
+}
 
 impl ElderFuthark {
+    fn new(config: TranscriptionConfig) -> Self {
+        ElderFuthark { config }
+    }
+    // runes
     pub const FEHU: char = 'ᚠ';
     pub const URUZ: char = 'ᚢ';
     pub const THURISAZ: char = 'ᚦ';
@@ -26,18 +47,19 @@ impl ElderFuthark {
     pub const INGWAZ: char = 'ᛜ';
     pub const DAGAZ: char = 'ᛞ';
     pub const OTHALA: char = 'ᛟ';
-    pub const BLANK: char = '᛫';
-    pub fn lookup(rune: char, convert_spaces: bool) -> Option<char> {
+    pub const SPACE: char = '᛫';
+    pub const CROSS: char = '᛭';
+
+    pub fn lookup(rune: char, config: TranscriptionConfig) -> Option<char> {
         match rune {
             'f' => Some(Self::FEHU),
             'u' => Some(Self::URUZ),
             'þ' => Some(Self::THURISAZ),
-            'a' => Some(Self::ANSUZ),
+            'a' | 'æ' => Some(Self::ANSUZ),
             'r' => Some(Self::RAIDHO),
             'k' => Some(Self::KAUNAN),
             'g' => Some(Self::GEBO),
-            'w' => Some(Self::WUNJO),
-            'x' => Some(Self::THURISAZ),
+            'w' | 'v' => Some(Self::WUNJO),
             'h' => Some(Self::HAGALAZ),
             'n' => Some(Self::NAUDIZ),
             'i' => Some(Self::ISA),
@@ -48,16 +70,29 @@ impl ElderFuthark {
             's' => Some(Self::SOWILO),
             't' => Some(Self::TIWAZ),
             'b' => Some(Self::BERKANAN),
-            'e' => Some(Self::EHWAZ),
+            'e' | 'ø' => Some(Self::EHWAZ),
             'm' => Some(Self::MANNAZ),
             'l' => Some(Self::LAGUZ),
-            'ŋ' => Some(Self::INGWAZ),
             'd' => Some(Self::DAGAZ),
-            'o' => Some(Self::OTHALA),
+            'o' | 'å' => Some(Self::OTHALA),
             'q' => Some(Self::KAUNAN),
+            '\'' => {
+                if config.convert_punctuation {
+                    Some('\0')
+                } else {
+                    None
+                }
+            }
+            '.' => {
+                if config.convert_punctuation {
+                    Some(Self::CROSS)
+                } else {
+                    None
+                }
+            }
             ' ' => {
-                if convert_spaces {
-                    Some(Self::BLANK)
+                if config.convert_spaces {
+                    Some(Self::SPACE)
                 } else {
                     None
                 }
@@ -65,19 +100,44 @@ impl ElderFuthark {
             _ => None,
         }
     }
-}
+    pub fn transcribe(&self, text: &str) -> String {
+        let mut result = String::new();
+        let lowercase_text = text.to_lowercase();
+        let mut chars = lowercase_text.chars().peekable();
 
-pub fn latin_to_elder_futhark(input: &str) -> String {
-    input
-        .to_ascii_lowercase()
-        .chars()
-        .map(|c| ElderFuthark::lookup(c, false).unwrap_or(c))
-        .collect()
+        while let Some(current_char) = chars.next() {
+            match current_char {
+                'x' => {
+                    result.push(Self::KAUNAN);
+                    result.push(Self::SOWILO);
+                }
+                't' if chars.peek() == Some(&'h') => {
+                    result.push(Self::THURISAZ);
+                    chars.next(); // Consume 'h'
+                }
+                'n' if chars.peek() == Some(&'g') => {
+                    result.push(Self::INGWAZ);
+                    chars.next(); // Consume 'g'
+                }
+                c => {
+                    if let Some(rune) = Self::lookup(c, self.config) {
+                        result.push(rune);
+                    } else {
+                        // If the character is not found, just push it as is
+                        result.push(c);
+                    }
+                }
+            }
+        }
+
+        result
+    }
 }
 
 fn main() {
-    let hello_world = String::from("HELLO WORLD!");
-    let converted = latin_to_elder_futhark(hello_world.as_str());
+    let futhark = ElderFuthark::new(TranscriptionConfig::default());
+
+    let converted = futhark.transcribe("Lorem ipsum dolor sit amet, consectetur adipiscing elit.");
 
     println!("converted: {}", converted);
 }
