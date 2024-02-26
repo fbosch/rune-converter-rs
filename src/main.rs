@@ -22,7 +22,7 @@ impl ElderFuthark {
     fn new(config: TranscriptionConfig) -> Self {
         ElderFuthark { config }
     }
-    // runes
+
     pub const FEHU: char = 'ᚠ';
     pub const URUZ: char = 'ᚢ';
     pub const THURISAZ: char = 'ᚦ';
@@ -57,7 +57,7 @@ impl ElderFuthark {
             'þ' => Some(Self::THURISAZ),
             'a' | 'æ' => Some(Self::ANSUZ),
             'r' => Some(Self::RAIDHO),
-            'k' => Some(Self::KAUNAN),
+            'k' | 'c' => Some(Self::KAUNAN),
             'g' => Some(Self::GEBO),
             'w' | 'v' => Some(Self::WUNJO),
             'h' => Some(Self::HAGALAZ),
@@ -76,7 +76,7 @@ impl ElderFuthark {
             'd' => Some(Self::DAGAZ),
             'o' | 'å' => Some(Self::OTHALA),
             'q' => Some(Self::KAUNAN),
-            '\'' => {
+            '\'' | ',' => {
                 if config.convert_punctuation {
                     Some('\0')
                 } else {
@@ -106,18 +106,23 @@ impl ElderFuthark {
         let mut chars = lowercase_text.chars().peekable();
 
         while let Some(current_char) = chars.next() {
+            let next_char = chars.peek().copied(); // Store the peeked value
             match current_char {
                 'x' => {
                     result.push(Self::KAUNAN);
                     result.push(Self::SOWILO);
                 }
-                't' if chars.peek() == Some(&'h') => {
+                't' if next_char == Some('h') => {
                     result.push(Self::THURISAZ);
                     chars.next(); // Consume 'h'
                 }
-                'n' if chars.peek() == Some(&'g') => {
+                'n' if next_char == Some('g') => {
                     result.push(Self::INGWAZ);
                     chars.next(); // Consume 'g'
+                }
+                'e' if next_char == Some('a') => {
+                    result.push(Self::EHWAZ);
+                    chars.next(); // Consume 'a'
                 }
                 c => {
                     if let Some(rune) = Self::lookup(c, self.config) {
