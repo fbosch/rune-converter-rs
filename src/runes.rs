@@ -116,7 +116,6 @@ impl Transcriber for ElderFuthark {
                 }
             }
         }
-
         result
     }
 }
