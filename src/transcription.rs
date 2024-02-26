@@ -1,14 +1,21 @@
 #[derive(Clone, Copy)]
 pub struct TranscriptionConfig {
-    pub convert_spaces: bool,
-    pub convert_punctuation: bool,
+    /// Indicates if spaces should be transcribed as runes (true) or left as spaces (false)
+    pub transcribe_spaces: bool,
+    ///  Determines if punctuation should be transcribed as runes (true) or remain unchanged (false)
+    pub transcribe_punctuation: bool,
 }
 
 impl Default for TranscriptionConfig {
     fn default() -> Self {
         TranscriptionConfig {
-            convert_spaces: true,
-            convert_punctuation: true,
+            transcribe_spaces: true,
+            transcribe_punctuation: true,
         }
     }
+}
+
+pub trait Transcriber {
+    fn lookup(rune: char, config: TranscriptionConfig) -> Option<char>;
+    fn transcribe(&self, text: &str) -> String;
 }

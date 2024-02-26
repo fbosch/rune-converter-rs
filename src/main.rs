@@ -1,10 +1,12 @@
 use rune_converter::runes::ElderFuthark;
-use rune_converter::transcription::TranscriptionConfig;
+use rune_converter::transcription::{Transcriber, TranscriptionConfig};
 
 fn main() {
-    let futhark = ElderFuthark::new(TranscriptionConfig::default());
+    let futhark = ElderFuthark::new(TranscriptionConfig {
+        transcribe_spaces: true,
+        transcribe_punctuation: true,
+    });
 
-    let converted = futhark.transcribe("Lorem ipsum dolor sit amet, consectetur adipiscing elit.");
-
-    println!("converted: {}", converted);
+    let name = futhark.transcribe("Frederik Bosch");
+    println!("name: {}", name);
 }

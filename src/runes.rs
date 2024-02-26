@@ -1,3 +1,4 @@
+use crate::transcription::Transcriber;
 use crate::transcription::TranscriptionConfig;
 
 #[non_exhaustive]
@@ -7,37 +8,20 @@ pub struct ElderFuthark {
 
 impl ElderFuthark {
     pub fn new(config: TranscriptionConfig) -> Self {
-        ElderFuthark { config }
+        Self { config }
     }
+}
 
-    pub const FEHU: char = 'ᚠ';
-    pub const URUZ: char = 'ᚢ';
-    pub const THURISAZ: char = 'ᚦ';
-    pub const ANSUZ: char = 'ᚨ';
-    pub const RAIDHO: char = 'ᚱ';
-    pub const KAUNAN: char = 'ᚲ';
-    pub const GEBO: char = 'ᚷ';
-    pub const WUNJO: char = 'ᚹ';
-    pub const HAGALAZ: char = 'ᚺ';
-    pub const NAUDIZ: char = 'ᚾ';
-    pub const ISA: char = 'ᛁ';
-    pub const JERA: char = 'ᛃ';
-    pub const EIHWAZ: char = 'ᛇ';
-    pub const PERTHO: char = 'ᛈ';
-    pub const ALGIZ: char = 'ᛉ';
-    pub const SOWILO: char = 'ᛊ';
-    pub const TIWAZ: char = 'ᛏ';
-    pub const BERKANAN: char = 'ᛒ';
-    pub const EHWAZ: char = 'ᛖ';
-    pub const MANNAZ: char = 'ᛗ';
-    pub const LAGUZ: char = 'ᛚ';
-    pub const INGWAZ: char = 'ᛜ';
-    pub const DAGAZ: char = 'ᛞ';
-    pub const OTHALA: char = 'ᛟ';
-    pub const SPACE: char = '᛫';
-    pub const CROSS: char = '᛭';
+impl Default for ElderFuthark {
+    fn default() -> Self {
+        Self {
+            config: TranscriptionConfig::default(),
+        }
+    }
+}
 
-    pub fn lookup(rune: char, config: TranscriptionConfig) -> Option<char> {
+impl Transcriber for ElderFuthark {
+    fn lookup(rune: char, config: TranscriptionConfig) -> Option<char> {
         match rune {
             'f' => Some(Self::FEHU),
             'u' => Some(Self::URUZ),
@@ -64,21 +48,21 @@ impl ElderFuthark {
             'o' | 'å' => Some(Self::OTHALA),
             'q' => Some(Self::KAUNAN),
             '\'' | ',' => {
-                if config.convert_punctuation {
+                if config.transcribe_punctuation {
                     Some('\0')
                 } else {
                     None
                 }
             }
             '.' => {
-                if config.convert_punctuation {
+                if config.transcribe_punctuation {
                     Some(Self::CROSS)
                 } else {
                     None
                 }
             }
             ' ' => {
-                if config.convert_spaces {
+                if config.transcribe_spaces {
                     Some(Self::SPACE)
                 } else {
                     None
@@ -87,7 +71,7 @@ impl ElderFuthark {
             _ => None,
         }
     }
-    pub fn transcribe(&self, text: &str) -> String {
+    fn transcribe(&self, text: &str) -> String {
         let mut result = String::new();
         let lowercase_text = text.to_lowercase();
         let mut chars = lowercase_text.chars().peekable();
@@ -124,4 +108,33 @@ impl ElderFuthark {
 
         result
     }
+}
+
+impl ElderFuthark {
+    pub const FEHU: char = 'ᚠ';
+    pub const URUZ: char = 'ᚢ';
+    pub const THURISAZ: char = 'ᚦ';
+    pub const ANSUZ: char = 'ᚨ';
+    pub const RAIDHO: char = 'ᚱ';
+    pub const KAUNAN: char = 'ᚲ';
+    pub const GEBO: char = 'ᚷ';
+    pub const WUNJO: char = 'ᚹ';
+    pub const HAGALAZ: char = 'ᚺ';
+    pub const NAUDIZ: char = 'ᚾ';
+    pub const ISA: char = 'ᛁ';
+    pub const JERA: char = 'ᛃ';
+    pub const EIHWAZ: char = 'ᛇ';
+    pub const PERTHO: char = 'ᛈ';
+    pub const ALGIZ: char = 'ᛉ';
+    pub const SOWILO: char = 'ᛊ';
+    pub const TIWAZ: char = 'ᛏ';
+    pub const BERKANAN: char = 'ᛒ';
+    pub const EHWAZ: char = 'ᛖ';
+    pub const MANNAZ: char = 'ᛗ';
+    pub const LAGUZ: char = 'ᛚ';
+    pub const INGWAZ: char = 'ᛜ';
+    pub const DAGAZ: char = 'ᛞ';
+    pub const OTHALA: char = 'ᛟ';
+    pub const SPACE: char = '᛫';
+    pub const CROSS: char = '᛭';
 }
