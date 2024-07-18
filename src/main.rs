@@ -3,13 +3,13 @@ use rune_converter::transcription::{Transcriber, TranscriptionConfig};
 
 use clap::Parser;
 
-#[derive(Parser)]
+#[derive(Parser, Debug)]
 #[command(version, about)]
 struct Cli {
     text: String,
-    #[arg(short, long, value_parser = clap::value_parser!(bool), default_value = "true")]
+    #[arg(short = 's', long, value_parser = clap::value_parser!(bool), default_value = "false")]
     spaces: bool,
-    #[arg(short, long, value_parser = clap::value_parser!(bool), default_value = "true")]
+    #[arg(short = 'p', long, short_alias = 'p', value_parser = clap::value_parser!(bool), default_value = "false")]
     punctuation: bool,
 }
 

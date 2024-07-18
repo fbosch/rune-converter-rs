@@ -45,7 +45,8 @@ impl ElderFuthark {
     pub const INGWAZ: char = 'ᛜ';
     pub const DAGAZ: char = 'ᛞ';
     pub const OTHALA: char = 'ᛟ';
-    pub const SPACE: char = '᛫';
+    pub const SINGLE_PUNCTUATION: char = '᛫';
+    pub const DOUBLE_PUNCTUATION: char = '᛬';
     pub const CROSS: char = '᛭';
 }
 
@@ -54,7 +55,7 @@ impl Transcriber for ElderFuthark {
         match character {
             'f' => Some(Self::FEHU),
             'u' => Some(Self::URUZ),
-            'þ' => Some(Self::THURISAZ),
+            'þ' | 'ð' => Some(Self::THURISAZ),
             'a' | 'æ' => Some(Self::ANSUZ),
             'r' => Some(Self::RAIDHO),
             'k' | 'c' => Some(Self::KAUNAN),
@@ -70,15 +71,16 @@ impl Transcriber for ElderFuthark {
             's' => Some(Self::SOWILO),
             't' => Some(Self::TIWAZ),
             'b' => Some(Self::BERKANAN),
-            'e' | 'ø' => Some(Self::EHWAZ),
+            'e' | 'ø' | 'é' | 'œ' => Some(Self::EHWAZ),
             'm' => Some(Self::MANNAZ),
             'l' => Some(Self::LAGUZ),
             'd' => Some(Self::DAGAZ),
             'o' | 'å' => Some(Self::OTHALA),
             'q' => Some(Self::KAUNAN),
+            ' ' if self.config.transcribe_spaces => Some(Self::SINGLE_PUNCTUATION),
+            ':' | ';' if self.config.transcribe_punctuation => Some(Self::DOUBLE_PUNCTUATION),
             '\'' | ',' if self.config.transcribe_punctuation => Some('\0'),
             '.' if self.config.transcribe_punctuation => Some(Self::CROSS),
-            ' ' if self.config.transcribe_spaces => Some(Self::SPACE),
             _ => None,
         }
     }
@@ -106,6 +108,14 @@ impl Transcriber for ElderFuthark {
                     result.push(Self::EHWAZ);
                     chars.next(); // Consume 'a'
                 }
+                ('.', Some(' ')) => {
+                    result.push(Self::CROSS);
+                    chars.next(); // Consume ' '
+                }
+                (':' | ';', Some(' ')) => {
+                    result.push(Self::DOUBLE_PUNCTUATION);
+                    chars.next(); // Consume ' '
+                }
                 (c, _) => {
                     if let Some(rune) = Self::lookup(self, c) {
                         result.push(rune);
@@ -117,5 +127,53 @@ impl Transcriber for ElderFuthark {
             }
         }
         result
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_transcribe() {
+        let elder_futhark = ElderFuthark::new(TranscriptionConfig::default());
+        let transcribed = elder_futhark
+            .transcribe("At hyggjandi sinni skylit maðr; hrœsinn vera heldr gætinn at geði");
+        assert!(transcribed == "ᚨᛏ ᚺᛇᚷᚷᛃᚨᚾᛞᛁ ᛊᛁᚾᚾᛁ ᛊᚲᛇᛚᛁᛏ ᛗᚨᚦᚱ᛬ᚺᚱᛖᛊᛁᚾᚾ ᚹᛖᚱᚨ ᚺᛖᛚᛞᚱ ᚷᚨᛏᛁᚾᚾ ᚨᛏ ᚷᛖᚦᛁ")
+    }
+
+    #[test]
+    fn test_transcribe_with_spaces() {
+        let elder_futhark = ElderFuthark::new(TranscriptionConfig {
+            transcribe_spaces: true,
+            ..Default::default()
+        });
+        let transcribed = elder_futhark
+            .transcribe("At hyggjandi sinni skylit maðr; hrœsinn vera heldr gætinn at geði");
+        assert!(transcribed == "ᚨᛏ᛫ᚺᛇᚷᚷᛃᚨᚾᛞᛁ᛫ᛊᛁᚾᚾᛁ᛫ᛊᚲᛇᛚᛁᛏ᛫ᛗᚨᚦᚱ᛬ᚺᚱᛖᛊᛁᚾᚾ᛫ᚹᛖᚱᚨ᛫ᚺᛖᛚᛞᚱ᛫ᚷᚨᛏᛁᚾᚾ᛫ᚨᛏ᛫ᚷᛖᚦᛁ")
+    }
+
+    #[test]
+    fn test_transcribe_with_punctuation() {
+        let elder_futhark = ElderFuthark::new(TranscriptionConfig {
+            transcribe_punctuation: true,
+            ..Default::default()
+        });
+        let transcribed = elder_futhark
+            .transcribe("At hyggjandi sinni skylit maðr; hrœsinn vera heldr gætinn at geði");
+        assert!(transcribed == "ᚨᛏ ᚺᛇᚷᚷᛃᚨᚾᛞᛁ ᛊᛁᚾᚾᛁ ᛊᚲᛇᛚᛁᛏ ᛗᚨᚦᚱ᛬ᚺᚱᛖᛊᛁᚾᚾ ᚹᛖᚱᚨ ᚺᛖᛚᛞᚱ ᚷᚨᛏᛁᚾᚾ ᚨᛏ ᚷᛖᚦᛁ")
+    }
+
+    #[test]
+    fn test_transcribe_with_spaces_and_punctuation() {
+        let elder_futhark = ElderFuthark::new(TranscriptionConfig {
+            transcribe_spaces: true,
+            transcribe_punctuation: true,
+            ..Default::default()
+        });
+        let transcribed = elder_futhark
+            .transcribe("At hyggjandi sinni skylit maðr; hrœsinn vera heldr gætinn at geði");
+
+        assert!(transcribed == "ᚨᛏ᛫ᚺᛇᚷᚷᛃᚨᚾᛞᛁ᛫ᛊᛁᚾᚾᛁ᛫ᛊᚲᛇᛚᛁᛏ᛫ᛗᚨᚦᚱ᛬ᚺᚱᛖᛊᛁᚾᚾ᛫ᚹᛖᚱᚨ᛫ᚺᛖᛚᛞᚱ᛫ᚷᚨᛏᛁᚾᚾ᛫ᚨᛏ᛫ᚷᛖᚦᛁ");
     }
 }
