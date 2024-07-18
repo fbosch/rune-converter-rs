@@ -56,7 +56,7 @@ impl Transcriber for ElderFuthark {
             'f' => Some(Self::FEHU),
             'u' => Some(Self::URUZ),
             'þ' | 'ð' => Some(Self::THURISAZ),
-            'a' | 'æ' => Some(Self::ANSUZ),
+            'a' | 'æ' | 'á' => Some(Self::ANSUZ),
             'r' => Some(Self::RAIDHO),
             'k' | 'c' => Some(Self::KAUNAN),
             'g' => Some(Self::GEBO),
@@ -107,6 +107,10 @@ impl Transcriber for ElderFuthark {
                 ('e', Some('a')) => {
                     result.push(Self::EHWAZ);
                     chars.next(); // Consume 'a'
+                }
+                ('c', Some('h')) => {
+                    result.push(Self::GEBO);
+                    chars.next(); // Consume 'h'
                 }
                 ('.', Some(' ')) => {
                     result.push(Self::CROSS);
@@ -175,5 +179,26 @@ mod tests {
             .transcribe("At hyggjandi sinni skylit maðr; hrœsinn vera heldr gætinn at geði");
 
         assert!(transcribed == "ᚨᛏ᛫ᚺᛇᚷᚷᛃᚨᚾᛞᛁ᛫ᛊᛁᚾᚾᛁ᛫ᛊᚲᛇᛚᛁᛏ᛫ᛗᚨᚦᚱ᛬ᚺᚱᛖᛊᛁᚾᚾ᛫ᚹᛖᚱᚨ᛫ᚺᛖᛚᛞᚱ᛫ᚷᚨᛏᛁᚾᚾ᛫ᚨᛏ᛫ᚷᛖᚦᛁ");
+    }
+
+    #[test]
+    fn test_transcribe_special_cases() {
+        let elder_futhark = ElderFuthark::new(TranscriptionConfig::default());
+
+        // Test special characters like 'þ', 'ð', 'æ', 'ø', 'é', 'œ'
+        let transcribed_special_chars = elder_futhark.transcribe("þðæøéœ");
+        assert_eq!(transcribed_special_chars, "ᚦᚦᚨᛖᛖᛖ");
+
+        // Test combined characters like 'th', 'ng', 'ea'
+        let transcribed_combined_chars = elder_futhark.transcribe("th ng ea");
+        assert_eq!(transcribed_combined_chars, "ᚦ ᛜ ᛖ");
+
+        // Test a mix of special characters and combined characters
+        let transcribed_mix = elder_futhark.transcribe("þæng");
+        assert_eq!(transcribed_mix, "ᚦᚨᛜ");
+
+        // Test handling of double characters like 'ch'
+        let transcribed_double_char = elder_futhark.transcribe("ch");
+        assert_eq!(transcribed_double_char, "ᚷ");
     }
 }
